@@ -1,5 +1,5 @@
 # webp_converter
-Mass convert Your jpg, png graphics files to recover free space on Your hard drive
+Mass convert Your jpg, png graphics files to recover free space on Your hard drive, as an extra function the script modyfying the Fooocus log.html if found any and update with .webp instead of jpeg and png.
 
 # Installation and Usage Guide
 
