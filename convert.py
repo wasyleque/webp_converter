@@ -1,8 +1,25 @@
 import os
+import argparse
 from PIL import Image
 
-def convert_images_and_update_logs(root_dir):
+def format_bytes(byte_count):
+    """Formats bytes into a human-readable string (KB, MB, GB)."""
+    if byte_count is None:
+        return "0 B"
+    power = 1024
+    n = 0
+    power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+    while byte_count >= power and n < len(power_labels) -1 :
+        byte_count /= power
+        n += 1
+    return f"{byte_count:.2f} {power_labels[n]}"
+
+def convert_images_and_update_logs(root_dir, autoremove=False):
     print(f"Starting process in directory: {root_dir}")
+    if autoremove:
+        print("AUTO-REMOVE is ENABLED. Original files will be deleted after conversion.")
+
+    total_bytes_saved = 0
 
     for dir_name in os.listdir(root_dir):
         current_dir = os.path.join(root_dir, dir_name)
@@ -11,9 +28,8 @@ def convert_images_and_update_logs(root_dir):
             continue
 
         print(f"\nProcessing subdirectory: {current_dir}")
-        has_converted_files = False
-
-        # Step 1 & 2: Find and convert all jpeg and png files
+        
+        # --- Image Conversion ---
         for filename in os.listdir(current_dir):
             if filename.lower().endswith(('.png', '.jpeg', '.jpg')):
                 input_path = os.path.join(current_dir, filename)
@@ -28,15 +44,22 @@ def convert_images_and_update_logs(root_dir):
                     with Image.open(input_path) as img:
                         img.save(output_path, 'webp')
                         print(f"  - Converted {filename} to {output_filename}")
-                        has_converted_files = True
+
+                    # If autoremove is enabled, delete the original file
+                    if autoremove:
+                        file_size = os.path.getsize(input_path)
+                        total_bytes_saved += file_size
+                        os.remove(input_path)
+                        print(f"  - Removed original file: {filename}")
+
                 except Exception as e:
                     print(f"  - Error converting {filename}: {e}")
 
-        # Step 3 & 4: If conversions happened, edit log.html
+        # --- Log File Update ---
         log_file_path = os.path.join(current_dir, 'log.html')
         if os.path.exists(log_file_path):
             try:
-                with open(log_file_path, 'r', encoding='utf-8') as f:
+                with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
 
                 new_content = content.replace('.jpeg', '.webp').replace('.png', '.webp')
@@ -52,9 +75,26 @@ def convert_images_and_update_logs(root_dir):
         else:
             print(f"  - No log.html found in {current_dir}.")
 
+    # --- Final Summary ---
+    if autoremove and total_bytes_saved > 0:
+        print("\n-------------------------------------------")
+        print(f"Process finished. You have just reclaimed {format_bytes(total_bytes_saved)} of space!")
+        print("-------------------------------------------")
+    else:
+        print("\nProcess finished.")
+
 
 if __name__ == "__main__":
-    # Get the directory where the script is located, which is the target directory
+    parser = argparse.ArgumentParser(
+        description="Convert JPEG/PNG images to WebP and update log files within subdirectories.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        '--autoremove',
+        action='store_true',
+        help="Delete original image files after successful conversion."
+    )
+    args = parser.parse_args()
+
     target_directory = os.getcwd()
-    convert_images_and_update_logs(target_directory)
-    print("\nProcess finished.")
+    convert_images_and_update_logs(target_directory, args.autoremove)
