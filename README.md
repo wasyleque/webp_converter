@@ -80,6 +80,27 @@ python converter.py --autoremove
 
 A summary of the reclaimed disk space will be displayed at the end.
 
+### Specifying Target Directory
+
+Use the `--dir` argument to specify a target directory for conversion:
+
+```bash
+python converter.py --dir /path/to/target/directory
+```
+
+### Recursive Conversion
+
+Use the `-r` or `--recursive` argument to process subdirectories recursively:
+
+```bash
+python converter.py -r
+```
+
+You can combine arguments:
+```bash
+python converter.py --autoremove --dir /path/to/target/directory -r
+```
+
 ## 4. Deactivating the Virtual Environment
 
 When you are finished, you can deactivate the virtual environment by simply running:
